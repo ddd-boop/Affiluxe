@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        .container { max-width: 500px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; }
+        h2 { text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 8px; }
+        .btn { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        .btn:hover { background-color: #45a049; }
+        .message { color: red; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="signupForm" class="container">
+        <h2>Signup</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="Enter password">
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="referral">Referral Name :</label>
+            <input type="text" id="referral" placeholder="Enter referral name">
+        </div>
+        <div class="form-group">
+            <label for="otp">OTP :</label>
+            <input type="text" id="otp" placeholder="Enter OTP">
+        </div>
+        <button class="btn" onclick="signup()">Sign Up</button>
+        <p class="message" id="signupMessage"></p>
+        <p>Already have an account? <a href="login.html">Login</a></p>
+        <p><a href="login.html">get coupon code</a></p>
+    </div>
+
+    <script>
+        let userDatabase = JSON.parse(localStorage.getItem('users')) || [];
+
+        // Predefined list of words for OTP validation
+        const wordsList = ['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape', 'honeydew', 'kiwi', 'lemon'];
+
+        // Retrieve the list of used OTPs from localStorage
+        let usedOTPs = JSON.parse(localStorage.getItem('usedOTPs')) || [];
+
+        function signup() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+            const referral = document.getElementById('referral').value;
+            const otp = document.getElementById('otp').value;
+
+            if (!username || !password || !email || !otp) {
+                document.getElementById('signupMessage').textContent = "All fields are required!";
+                return;
+            }
+
+            // Check if username or email already exist
+            if (userDatabase.some(user => user.username === username || user.email === email)) {
+                document.getElementById('signupMessage').textContent = "Username or email already taken!";
+                return;
+            }
+
+            // Referral bonus logic: Check if referral username exists
+            if (referral && referral !== "affiluxe006-" && !userDatabase.some(user => user.username === referral)) {
+                document.getElementById('signupMessage').textContent = "Referral username not found!";
+                return;
+            }
+
+            // Check if OTP is valid (must be in the wordsList) and not used
+            if (!wordsList.includes(otp.toLowerCase())) {
+                document.getElementById('signupMessage').textContent = "Invalid OTP!";
+                return;
+            }
+
+            // Check if OTP has already been used
+            if (usedOTPs.includes(otp.toLowerCase())) {
+                document.getElementById('signupMessage').textContent = "This OTP has already been used!";
+                return;
+            }
+
+            // Mark the OTP as used by adding it to the usedOTPs array
+            usedOTPs.push(otp.toLowerCase());
+            localStorage.setItem('usedOTPs', JSON.stringify(usedOTPs)); // Save the updated list of used OTPs
+
+            // Referral bonus: Add $4 to the referred user's referral balance (not current user's balance)
+            if (referral && referral !== "affiluxe006-") {
+                const referredUser = userDatabase.find(user => user.username === referral);
+                if (referredUser) {
+                    referredUser.referralBonus += 4; // Add $4 to the referred user's referral balance
+                }
+            }
+
+            const newUser = {
+                username,
+                password,
+                email,
+                referralBonus: 0,  // New user starts with no referral bonus
+                balance: 0,        // New user starts with no balance
+            };
+
+            // Add the new user to the user database
+            userDatabase.push(newUser);
+            localStorage.setItem('users', JSON.stringify(userDatabase));
+
+            // Redirect to the login page after successful signup
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
